@@ -3,8 +3,6 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
-#include <aero_error_handling.h>
-
 int HomeAssistant::sendGetRequest(String endpoint)
 {
     if (!_ensureConnected())
