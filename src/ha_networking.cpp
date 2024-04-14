@@ -5,10 +5,6 @@
 #include <ArduinoJson.h>
 #include <aero_error_handling.h>
 
-UIError error_no_home_assistant(F("Cannot connect to HomeAssistant"));
-UIError error_auth_home_assistant(F("Authentication with HomeAssistant failed - check token"));
-UIInfo info_example(F("This is an example of an info message, hello!"), F("Go Team!"));
-
 int HomeAssistant::sendGetRequest(String endpoint)
 {
     if (!_ensureConnected())
