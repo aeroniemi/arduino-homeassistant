@@ -1,0 +1,33 @@
+name: documentation
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: actions/setup-python@v5
+          - name: Install dependencies
+            run: |
+              pip install sphinx sphinx_rtd_theme myst_parser
+          - name: Sphinx build
+            run: |
+              sphinx-build doc _site
+          - uses: actions/upload-pages-artifact@v3
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        permissions:
+            pages: write      # to deploy to Pages
+            id-token: write   # to verify the deployment originates from an appropriate source
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+          - name: Deploy to GitHub Pages
+            id: deployment
+            uses: actions/deploy-pages@v4
