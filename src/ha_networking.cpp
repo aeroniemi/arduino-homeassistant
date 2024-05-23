@@ -97,3 +97,6 @@ bool HomeAssistant::_ensureConnected()
     //! do something
     return false;
 }
+String HomeAssistant::getClientId() {
+    return String("http%3A%2F%2F"+WiFi.localIP().toString())
+}

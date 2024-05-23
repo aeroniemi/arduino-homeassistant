@@ -78,9 +78,56 @@ bool HomeAssistant::setPort(int port)
     _port = port;
     return true;
 };
+bool HomeAsssistant::requestRefreshToken(String access_code)
+{
+    if (access_code.length() == 0)
+        return false;
+    JsonDocument response = sendPostRequestWithResponse("/auth/token", {"grant_type" = "authorization_code",
+                                                                        "code" = access_code,
+                                                                        "client_id" = getClientId()});
+    if (response["code"] != 200)
+        return false;
+    if (response["error"])
+        return false;
+    access_token = response["access_token"];
+    refresh_token = response["refresh_token"];
+    access_token_expiry = response["expires_in"] + millis();
+    return true;
+};
+bool HomeAsssistant::requestAccessToken()
+{
+    if (refresh_token.length() == 0)
+        return false;
+    JsonDocument response = sendPostRequestWithResponse("/auth/token", {"grant_type" = "refresh_token",
+                                                                        "refresh_token" = refresh_token,
+                                                                        "client_id" = getClientId()});
+    if (response["code"] != 200)
+        return false;
+    if (response["error"])
+        return false;
+    access_token = response["access_token"];
+    access_token_expiry = response["expires_in"] + millis();
+    return true;
+};
+String HomeAssistant::getRefreshToken()
+{
+    return refresh_token;
+}
+String HomeAssistant::getAccessTokenToken()
+{
+    if (abs(millis() - access_token_start_time) > (access_token_duration-10))
+    { // has expired
+        requestAccessToken();
+    };
+    return access_token;
+}
 bool HomeAssistant::setup(String token, String host, int port)
 {
-    return setToken(token) && setHost(host) && setPort(port);
+    if (not _use_refresh_tokens)
+    {
+        return setToken(token) && setHost(host) && setPort(port);
+    }
+    return requestRefreshToken(token) && setHost(host) && setPort(port);
 };
 bool HomeAssistant::isSetup()
 {
