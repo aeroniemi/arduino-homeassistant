@@ -53,7 +53,7 @@ void HomeAssistant::createEntities()
     if (_networking_enabled)
     {
         _httpClient.begin(_host, _port, "/api/states");
-        _httpClient.addHeader("Authorization", _token);
+        _httpClient.addHeader("Authorization", getToken());
         int status_code = _httpClient.GET();
         if (status_code != 200)
         {
@@ -90,7 +90,7 @@ void HomeAssistant::updateAllStates()
     if (_networking_enabled)
     {
         _httpClient.begin(_host, _port, "/api/states");
-        _httpClient.addHeader("Authorization", _token);
+        _httpClient.addHeader("Authorization", getToken());
         int status_code = _httpClient.GET();
         if (status_code != 200)
         {

@@ -12,7 +12,7 @@ bool HomeAssistant::checkServerStatus()
         return true;
     return false;
 }
-void HomeAssistant::getDeviceList(){};
+void HomeAssistant::getDeviceList() {};
 
 Entity *HomeAssistant::getEntityByIdentifier(String identifier)
 {
@@ -78,44 +78,14 @@ bool HomeAssistant::setPort(int port)
     _port = port;
     return true;
 };
-bool HomeAsssistant::requestRefreshToken(String access_code)
-{
-    if (access_code.length() == 0)
-        return false;
-    JsonDocument response = sendPostRequestWithResponse("/auth/token", {"grant_type" = "authorization_code",
-                                                                        "code" = access_code,
-                                                                        "client_id" = getClientId()});
-    if (response["code"] != 200)
-        return false;
-    if (response["error"])
-        return false;
-    access_token = response["access_token"];
-    refresh_token = response["refresh_token"];
-    access_token_expiry = response["expires_in"] + millis();
-    return true;
-};
-bool HomeAsssistant::requestAccessToken()
-{
-    if (refresh_token.length() == 0)
-        return false;
-    JsonDocument response = sendPostRequestWithResponse("/auth/token", {"grant_type" = "refresh_token",
-                                                                        "refresh_token" = refresh_token,
-                                                                        "client_id" = getClientId()});
-    if (response["code"] != 200)
-        return false;
-    if (response["error"])
-        return false;
-    access_token = response["access_token"];
-    access_token_expiry = response["expires_in"] + millis();
-    return true;
-};
 String HomeAssistant::getRefreshToken()
 {
     return refresh_token;
 }
-String HomeAssistant::getAccessTokenToken()
+String HomeAssistant::getAccessToken()
 {
-    if (abs(millis() - access_token_start_time) > (access_token_duration-10))
+    int difference = (millis() - access_token_start_time) / 1000;
+    if (abs(difference) > (access_token_duration - 10))
     { // has expired
         requestAccessToken();
     };
@@ -127,12 +97,21 @@ bool HomeAssistant::setup(String token, String host, int port)
     {
         return setToken(token) && setHost(host) && setPort(port);
     }
-    return requestRefreshToken(token) && setHost(host) && setPort(port);
+    log_d("host:%s", host.c_str());
+    return setHost(host) && setPort(port) && (requestRefreshToken(token).length() > 0);
 };
 bool HomeAssistant::isSetup()
 {
-    if (_token == "")
-        return false;
+    if (_use_refresh_tokens)
+    {
+        if (refresh_token.length() == 0)
+            return false;
+    }
+    else
+    {
+        if (_token == "")
+            return false;
+    };
     if (_host == "")
         return false;
     if (_port == 0)

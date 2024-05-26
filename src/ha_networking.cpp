@@ -9,7 +9,7 @@ int HomeAssistant::sendGetRequest(String endpoint)
         return 200; //! pretend it did something
     Serial.println("Preparing GET request NR to " + endpoint);
     _httpClient.begin(_host, _port, endpoint);
-    _httpClient.addHeader("Authorization", _token);
+    _httpClient.addHeader("Authorization", getToken());
     Serial.println("Sending GET request to " + endpoint);
     int status_code = _httpClient.GET();
     log_d("GET request dealt with");
@@ -27,7 +27,7 @@ JsonDocument HomeAssistant::sendGetRequestWithResponse(String endpoint)
     }
     Serial.println("Sending GET request WR to " + endpoint);
     _httpClient.begin(_host, _port, endpoint);
-    _httpClient.addHeader("Authorization", _token);
+    _httpClient.addHeader("Authorization", getToken());
     int status_code = _httpClient.GET();
     JsonDocument response;
     deserializeJson(response, _httpClient.getStream());
@@ -43,7 +43,7 @@ int HomeAssistant::sendPostRequest(String endpoint, JsonDocument body)
         return 200; //! pretend it did something
     Serial.println("Sending POST request to " + endpoint);
     _httpClient.begin(_host, _port, endpoint);
-    _httpClient.addHeader("Authorization", _token);
+    _httpClient.addHeader("Authorization", getToken());
     _httpClient.addHeader("content-type", "application/json");
     String json;
     serializeJson(body, json);
@@ -62,7 +62,7 @@ JsonDocument HomeAssistant::sendPostRequestWithResponse(String endpoint, JsonDoc
     }
     Serial.println("Sending POST request to " + endpoint);
     _httpClient.begin(_host, _port, endpoint);
-    _httpClient.addHeader("Authorization", _token);
+    _httpClient.addHeader("Authorization", getToken());
     _httpClient.addHeader("content-type", "application/json");
     String json;
     serializeJson(body, json);
@@ -84,7 +84,12 @@ void HomeAssistant::init() {
 }
 HomeAssistant::HomeAssistant(){};
 HomeAssistant::HomeAssistant(String token, String host, int port){
+    log_d("firsthost:%s", token.c_str());
     setup(token, host, port);
+};
+HomeAssistant::HomeAssistant(String host, int port){
+    setHost(host);
+    setPort(port);
 };
 bool HomeAssistant::isConnected()
 {
@@ -98,5 +103,65 @@ bool HomeAssistant::_ensureConnected()
     return false;
 }
 String HomeAssistant::getClientId() {
-    return String("http%3A%2F%2F"+WiFi.localIP().toString())
+    return String("http://" + WiFi.localIP().toString());
+}
+
+bool HomeAssistant::requestAccessToken(){
+    if (refresh_token.length() == 0)
+        return false;
+        // return requestRefreshToken();
+
+    Serial.println("Sending POST request for access");
+    _httpClient.begin(_host, _port, "/auth/token");
+    _httpClient.addHeader("content-type", "application/x-www-form-urlencoded");
+    String body = String("grant_type=refresh_token&refresh_token=" + refresh_token + "&client_id=" + getClientId());
+    int status_code = _httpClient.POST(body);
+    if (status_code != 200)
+        return false;
+    JsonDocument response;
+    deserializeJson(response, _httpClient.getStream());
+    _httpClient.end();
+    if (!response.containsKey("access_token"))
+        return false;
+    access_token = String("Bearer " + response["access_token"].as<String>());
+    access_token_duration = response["expires_in"].as<int>();
+    access_token_start_time = millis();
+    return true;
+};
+String HomeAssistant::requestRefreshToken(String access_code){
+    // if (code.length() == 0) 
+    //     return requestRefreshToken();
+
+    log_d("Sending POST request for refresh");
+    _httpClient.begin(_host, _port, "/auth/token");
+    _httpClient.addHeader("content-type", "application/x-www-form-urlencoded");
+    String body = String("grant_type=authorization_code&code=" + access_code + "&client_id="+ getClientId());
+    log_d("'%s', %s", body.c_str(), getClientId());
+    int status_code = _httpClient.POST(body);
+    if (status_code != 200)
+        return "";
+    JsonDocument response;
+    deserializeJson(response, _httpClient.getStream());
+    _httpClient.end();
+    if (!response.containsKey("refresh_token"))
+        return "";
+    refresh_token = response["refresh_token"].as<String>();
+    access_token = String("Bearer "+ response["access_token"].as<String>());
+    access_token_duration = response["expires_in"].as<int>();
+    access_token_start_time = millis();
+    return refresh_token;
+};
+void HomeAssistant::reload() {
+
+};
+String HomeAssistant::getToken() {
+    if (_use_refresh_tokens) {
+        return getAccessToken();
+    }else {
+        return _token;
+    };
+};
+void HomeAssistant::setRefreshToken(String rt) {
+    refresh_token = rt;
+    requestAccessToken();
 }
