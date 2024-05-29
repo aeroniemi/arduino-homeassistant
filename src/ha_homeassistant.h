@@ -30,6 +30,7 @@ private:
     String access_token;
     int access_token_duration;
     unsigned long access_token_start_time;
+
 public:
     HomeAssistant();
     HomeAssistant(String token, String host, int port);
@@ -65,6 +66,7 @@ public:
     void reload();
     String getToken();
     void setRefreshToken(String rt);
+    String getTimezone();
 };
 extern HomeAssistant *ha;
 
