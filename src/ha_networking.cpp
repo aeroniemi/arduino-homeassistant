@@ -121,7 +121,7 @@ bool HomeAssistant::requestAccessToken(){
     JsonDocument response;
     deserializeJson(response, _httpClient.getStream());
     _httpClient.end();
-    if (!response.containsKey("access_token"))
+    if (!response["access_token"].is<String>())
         return false;
     access_token = String("Bearer " + response["access_token"].as<String>());
     access_token_duration = response["expires_in"].as<int>();
@@ -143,7 +143,7 @@ String HomeAssistant::requestRefreshToken(String access_code){
     JsonDocument response;
     deserializeJson(response, _httpClient.getStream());
     _httpClient.end();
-    if (!response.containsKey("refresh_token"))
+    if (!response["refresh_token"].is<String>())
         return "";
     refresh_token = response["refresh_token"].as<String>();
     access_token = String("Bearer "+ response["access_token"].as<String>());
