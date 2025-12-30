@@ -32,9 +32,9 @@ void Entity::updateIfRequired()
 void Entity::_updateState()
 {
     JsonDocument response = ha->sendGetRequestWithResponse(String("/api/states/" + _entity_id));
-    if (response["status_code"] != 200)
+    if (response["status_code"].as<int>() != 200)
     {
-        log_e("Failed to update state: code %d", response["status_code"]);
+        log_e("Failed to update state: code %d", response["status_code"].as<int>());
     }
     updateStateFromJSON(response);
 }
