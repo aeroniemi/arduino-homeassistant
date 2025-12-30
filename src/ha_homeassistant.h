@@ -5,6 +5,7 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include "ha_entity.h"
+#include <Arduino.h>
 
 #ifndef HA_MAX_ENTITIES
 #define HA_MAX_ENTITIES 30
@@ -24,10 +25,16 @@ private:
     int _definedEntities = 0;
     Entity *_activeEntity;
     bool _networking_enabled = true;
+    bool _use_refresh_tokens = true;
+    String refresh_token = "";
+    String access_token;
+    int access_token_duration;
+    unsigned long access_token_start_time;
 
 public:
     HomeAssistant();
     HomeAssistant(String token, String host, int port);
+    HomeAssistant(String host, int port);
     bool setToken(String token);
     bool setHost(String host);
     bool setPort(int port);
@@ -51,6 +58,15 @@ public:
     bool setup(String token, String host, int port);
     bool isSetup();
     void init();
+    String getRefreshToken();
+    String requestRefreshToken(String access_code);
+    bool requestAccessToken();
+    String getAccessToken();
+    String getClientId();
+    void reload();
+    String getToken();
+    void setRefreshToken(String rt);
+    String getTimezone();
 };
 extern HomeAssistant *ha;
 

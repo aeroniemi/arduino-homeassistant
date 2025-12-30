@@ -84,6 +84,7 @@ void HomeAssistant::init() {
 }
 HomeAssistant::HomeAssistant(){};
 HomeAssistant::HomeAssistant(String token, String host, int port){
+    log_d("firsthost:%s", token.c_str());
     setup(token, host, port);
 };
 HomeAssistant::HomeAssistant(String host, int port){
