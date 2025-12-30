@@ -118,4 +118,14 @@ bool HomeAssistant::isSetup()
         return false;
     return true;
 }
+String HomeAssistant::getTimezone() {
+    const JsonDocument response = sendGetRequestWithResponse("/api/config");
+
+    if (not response.containsKey("time_zone"))
+        // invalid response
+        return "GMT0";
+
+    return response["time_zone"].as<String>();
+};
+
 #endif
