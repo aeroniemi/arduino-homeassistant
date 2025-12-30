@@ -12,7 +12,7 @@ bool HomeAssistant::checkServerStatus()
         return true;
     return false;
 }
-void HomeAssistant::getDeviceList(){};
+void HomeAssistant::getDeviceList() {};
 
 Entity *HomeAssistant::getEntityByIdentifier(String identifier)
 {
@@ -78,14 +78,40 @@ bool HomeAssistant::setPort(int port)
     _port = port;
     return true;
 };
+String HomeAssistant::getRefreshToken()
+{
+    return refresh_token;
+}
+String HomeAssistant::getAccessToken()
+{
+    int difference = (millis() - access_token_start_time) / 1000;
+    if (abs(difference) > (access_token_duration - 10))
+    { // has expired
+        requestAccessToken();
+    };
+    return access_token;
+}
 bool HomeAssistant::setup(String token, String host, int port)
 {
-    return setToken(token) && setHost(host) && setPort(port);
+    if (not _use_refresh_tokens)
+    {
+        return setToken(token) && setHost(host) && setPort(port);
+    }
+    log_d("host:%s", host.c_str());
+    return setHost(host) && setPort(port) && (requestRefreshToken(token).length() > 0);
 };
 bool HomeAssistant::isSetup()
 {
-    if (_token == "")
-        return false;
+    if (_use_refresh_tokens)
+    {
+        if (refresh_token.length() == 0)
+            return false;
+    }
+    else
+    {
+        if (_token == "")
+            return false;
+    };
     if (_host == "")
         return false;
     if (_port == 0)
