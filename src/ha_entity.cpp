@@ -32,9 +32,9 @@ void Entity::updateIfRequired()
 void Entity::_updateState()
 {
     JsonDocument response = ha->sendGetRequestWithResponse(String("/api/states/" + _entity_id));
-    if (response["status_code"] != 200)
+    if (response["status_code"].as<int>() != 200)
     {
-        log_e("Failed to update state: code %d", response["status_code"]);
+        log_e("Failed to update state: code %d", response["status_code"].as<int>());
     }
     updateStateFromJSON(response);
 }
@@ -53,7 +53,7 @@ void HomeAssistant::createEntities()
     if (_networking_enabled)
     {
         _httpClient.begin(_host, _port, "/api/states");
-        _httpClient.addHeader("Authorization", _token);
+        _httpClient.addHeader("Authorization", getToken());
         int status_code = _httpClient.GET();
         if (status_code != 200)
         {
@@ -90,7 +90,7 @@ void HomeAssistant::updateAllStates()
     if (_networking_enabled)
     {
         _httpClient.begin(_host, _port, "/api/states");
-        _httpClient.addHeader("Authorization", _token);
+        _httpClient.addHeader("Authorization", getToken());
         int status_code = _httpClient.GET();
         if (status_code != 200)
         {
